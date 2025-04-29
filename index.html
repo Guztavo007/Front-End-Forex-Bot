@@ -1,19 +1,368 @@
-<!doctype html>
-<html>
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
-		<title>My static Space</title>
-		<link rel="stylesheet" href="style.css" />
-	</head>
-	<body>
-		<div class="card">
-			<h1>Welcome to your static Space!</h1>
-			<p>You can modify this app directly by editing <i>index.html</i> in the Files and versions tab.</p>
-			<p>
-				Also don't forget to check the
-				<a href="https://huggingface.co/docs/hub/spaces" target="_blank">Spaces documentation</a>.
-			</p>
-		</div>
-	</body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forex Trading Bot Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .chart-container {
+            height: 400px;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .chart-placeholder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #64748b;
+            font-size: 1.2rem;
+        }
+        
+        .price-up {
+            color: #10b981;
+        }
+        
+        .price-down {
+            color: #ef4444;
+        }
+        
+        .blink {
+            animation: blink-animation 1s steps(5, start) infinite;
+        }
+        
+        @keyframes blink-animation {
+            to {
+                opacity: 0.5;
+            }
+        }
+        
+        .glow {
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+        
+        .tradingview-widget-container {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200">
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8">
+            <div class="flex items-center space-x-4">
+                <i class="fas fa-robot text-blue-500 text-3xl"></i>
+                <h1 class="text-2xl font-bold">Forex AutoTrader PRO</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="bg-gray-800 px-4 py-2 rounded-lg">
+                    <span class="text-gray-400">Connected to:</span>
+                    <span class="text-blue-400 ml-2">OANDA</span>
+                    <span class="ml-2 text-green-400"><i class="fas fa-circle"></i></span>
+                </div>
+                <button class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg">
+                    <i class="fas fa-cog mr-2"></i>Settings
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Dashboard -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left Column -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Chart Section -->
+                <div class="bg-gray-800 rounded-xl p-4 shadow-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center space-x-4">
+                            <h2 class="text-xl font-semibold">EUR/USD</h2>
+                            <div class="text-lg">
+                                <span class="price-up">1.0954</span>
+                                <span class="text-gray-400 ml-2">+0.24%</span>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded">1H</button>
+                            <button class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded">4H</button>
+                            <button class="bg-blue-600 px-3 py-1 rounded">D</button>
+                            <button class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded">W</button>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-placeholder">
+                            <i class="fas fa-chart-line text-4xl mb-2"></i>
+                            <p>Live price chart would appear here</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Bot Controls -->
+                <div class="bg-gray-800 rounded-xl p-4 shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4">Bot Controls</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-gray-700 p-4 rounded-lg">
+                            <h3 class="text-gray-400 mb-2">Trading Status</h3>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xl font-bold text-green-400">ACTIVE</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-700 p-4 rounded-lg">
+                            <h3 class="text-gray-400 mb-2">Risk Level</h3>
+                            <div class="flex items-center space-x-2">
+                                <input type="range" min="1" max="5" value="3" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                                <span class="text-lg font-bold">3/5</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-700 p-4 rounded-lg">
+                            <h3 class="text-gray-400 mb-2">Daily Target</h3>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xl font-bold">1.5%</span>
+                                <button class="text-blue-400 hover:text-blue-300">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 grid grid-cols-2 gap-4">
+                        <button class="bg-green-600 hover:bg-green-700 py-3 rounded-lg font-bold flex items-center justify-center">
+                            <i class="fas fa-play mr-2"></i> Start Session
+                        </button>
+                        <button class="bg-red-600 hover:bg-red-700 py-3 rounded-lg font-bold flex items-center justify-center">
+                            <i class="fas fa-stop mr-2"></i> Emergency Stop
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column -->
+            <div class="space-y-6">
+                <!-- Account Summary -->
+                <div class="bg-gray-800 rounded-xl p-4 shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4">Account Summary</h2>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Balance:</span>
+                            <span class="font-bold">$10,245.67</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Equity:</span>
+                            <span class="font-bold">$10,532.12</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Margin Used:</span>
+                            <span class="font-bold">$1,245.50 (12%)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Today's P/L:</span>
+                            <span class="font-bold text-green-400">+$286.45</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Monthly P/L:</span>
+                            <span class="font-bold text-green-400">+$1,245.78</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Open Positions -->
+                <div class="bg-gray-800 rounded-xl p-4 shadow-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold">Open Positions</h2>
+                        <span class="bg-blue-900 text-blue-300 px-2 py-1 rounded text-sm">3 ACTIVE</span>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="bg-gray-700 p-3 rounded-lg">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <span class="font-bold">EUR/USD</span>
+                                    <span class="text-sm text-gray-400 ml-2">BUY</span>
+                                </div>
+                                <span class="text-green-400 font-bold">+1.2%</span>
+                            </div>
+                            <div class="flex justify-between text-sm mt-1">
+                                <span>Size: 0.5 lots</span>
+                                <span>Open: 1.0924</span>
+                                <span>Now: <span class="text-green-400">1.0954</span></span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-700 p-3 rounded-lg">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <span class="font-bold">USD/JPY</span>
+                                    <span class="text-sm text-gray-400 ml-2">SELL</span>
+                                </div>
+                                <span class="text-red-400 font-bold">-0.4%</span>
+                            </div>
+                            <div class="flex justify-between text-sm mt-1">
+                                <span>Size: 0.3 lots</span>
+                                <span>Open: 143.24</span>
+                                <span>Now: <span class="text-red-400">143.56</span></span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-700 p-3 rounded-lg">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <span class="font-bold">GBP/USD</span>
+                                    <span class="text-sm text-gray-400 ml-2">BUY</span>
+                                </div>
+                                <span class="text-green-400 font-bold">+0.8%</span>
+                            </div>
+                            <div class="flex justify-between text-sm mt-1">
+                                <span>Size: 0.4 lots</span>
+                                <span>Open: 1.2745</span>
+                                <span>Now: <span class="text-green-400">1.2789</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Trading Signals -->
+                <div class="bg-gray-800 rounded-xl p-4 shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4">Trading Signals</h2>
+                    <div class="space-y-3">
+                        <div class="bg-gray-700 p-3 rounded-lg border-l-4 border-blue-500">
+                            <div class="flex justify-between">
+                                <span class="font-bold">EUR/USD</span>
+                                <span class="text-xs bg-blue-500 text-white px-2 py-1 rounded">NEW</span>
+                            </div>
+                            <p class="text-sm mt-1">Strong bullish momentum detected on 4H chart</p>
+                            <div class="flex justify-between text-xs mt-2 text-gray-400">
+                                <span>2 min ago</span>
+                                <button class="text-blue-400 hover:text-blue-300">View Details</button>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-700 p-3 rounded-lg border-l-4 border-yellow-500">
+                            <div class="flex justify-between">
+                                <span class="font-bold">USD/JPY</span>
+                                <span class="text-xs bg-yellow-500 text-white px-2 py-1 rounded">PENDING</span>
+                            </div>
+                            <p class="text-sm mt-1">Potential reversal at resistance level 143.80</p>
+                            <div class="flex justify-between text-xs mt-2 text-gray-400">
+                                <span>15 min ago</span>
+                                <button class="text-blue-400 hover:text-blue-300">View Details</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="mt-8 bg-gray-800 rounded-xl p-4 shadow-lg">
+            <h2 class="text-xl font-semibold mb-4">Recent Activity</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-700">
+                    <thead>
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Time</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Pair</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Action</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Size</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Price</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">P/L</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        <tr>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm">10:45:23</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-bold">EUR/USD</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-400">BUY</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm">0.5</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm">1.0924</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-400">+$65.00</td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm">09:30:12</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-bold">USD/JPY</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-red-400">SELL</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm">0.3</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm">143.24</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-red-400">-$24.50</td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm">08:15:47</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-bold">GBP/USD</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-400">BUY</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm">0.4</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm">1.2745</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-400">+$42.30</td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm">Yesterday</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-bold">AUD/USD</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-400">BUY</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm">0.2</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm">0.6612</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-400">+$18.75</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simulate live price updates
+        function simulatePriceUpdates() {
+            const eurUsdElement = document.querySelector('.price-up');
+            let price = 1.0954;
+            
+            setInterval(() => {
+                // Random small price change
+                const change = (Math.random() - 0.5) * 0.0005;
+                price += change;
+                
+                // Format to 4 decimal places
+                const newPrice = price.toFixed(4);
+                
+                // Update display
+                eurUsdElement.textContent = newPrice;
+                
+                // Change color based on direction
+                if (change > 0) {
+                    eurUsdElement.classList.remove('price-down');
+                    eurUsdElement.classList.add('price-up');
+                } else {
+                    eurUsdElement.classList.remove('price-up');
+                    eurUsdElement.classList.add('price-down');
+                }
+                
+                // Add blink effect for changes
+                eurUsdElement.classList.add('blink');
+                setTimeout(() => {
+                    eurUsdElement.classList.remove('blink');
+                }, 300);
+            }, 3000);
+        }
+        
+        // Toggle emergency stop button glow
+        function toggleEmergencyGlow() {
+            const emergencyBtn = document.querySelector('.bg-red-600');
+            setInterval(() => {
+                emergencyBtn.classList.toggle('glow');
+            }, 1000);
+        }
+        
+        // Initialize simulations
+        document.addEventListener('DOMContentLoaded', () => {
+            simulatePriceUpdates();
+            toggleEmergencyGlow();
+        });
+    </script>
+<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;display:inline-block;margin-right:3px;filter:brightness(0) invert(1);"><a href="https://enzostvs-deepsite.hf.space" style="color: #fff;text-decoration: underline;" target="_blank" >DeepSite</a> - 🧬 <a href="https://enzostvs-deepsite.hf.space?remix=Guztavo0007/forex-trading-bot-interface" style="color: #fff;text-decoration: underline;" target="_blank" >Remix</a></p></body>
 </html>
