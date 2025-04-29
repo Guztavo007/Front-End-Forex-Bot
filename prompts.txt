@@ -1,0 +1,1 @@
+Can you also add in where users would input there OANDA API key to link the account to the bot?
