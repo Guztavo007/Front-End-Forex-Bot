@@ -22,7 +22,7 @@
 
   <p id="run-status" class="mb-6 text-sm text-green-400"></p>
 
-  <!-- Live Chart Placeholder -->
+  <!-- Live Chart -->
   <section class="mb-8">
     <h2 class="text-2xl font-semibold mb-2">Live Chart</h2>
     <iframe id="chart-frame" class="rounded-lg" width="100%" height="400" frameborder="0"
@@ -31,35 +31,39 @@
     </iframe>
   </section>
 
-  <!-- Dashboard Panels -->
-  <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <!-- Account Summary -->
+  <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
     <div class="bg-gray-800 p-4 rounded-lg">
       <h2 class="text-xl font-bold mb-4">Bot Settings</h2>
       <label class="block mb-1">Risk Level</label>
       <input type="range" min="1" max="5" value="3" class="w-full">
     </div>
     <div class="bg-gray-800 p-4 rounded-lg">
-      <h2 class="text-xl font-bold mb-4">Account Summary</h2>
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">Account Summary</h2>
+        <button id="refresh-summary" class="text-blue-400 hover:underline text-sm">Refresh</button>
+      </div>
       <ul class="text-gray-300 space-y-2">
-  <li>Balance: <span id="balance">$0.00</span></li>
-  <li>Equity: <span id="equity">$0.00</span></li>
-  <li>Margin Used: <span id="marginUsed">-</span></li>
-  <li>Monthly P/L: <span id="monthlyPL">$0.00</span></li>
-</ul>
+        <li>Balance: <span id="balance">$0.00</span></li>
+        <li>Equity: <span id="equity">$0.00</span></li>
+        <li>Margin Used: <span id="marginUsed">-</span></li>
+        <li>Monthly P/L: <span id="monthlyPL">$0.00</span></li>
+      </ul>
     </div>
   </section>
 
-  <!-- Signal Panel -->
-  <section class="mt-8 bg-gray-800 p-4 rounded-lg">
-    <h2 class="text-xl font-bold mb-4">Trade Signals</h2>
+  <!-- Signals -->
+  <section class="mb-8 bg-gray-800 p-4 rounded-lg">
+    <h2 class="text-xl font-semibold mb-4">Trade Signals</h2>
     <div class="text-gray-400">No active signals</div>
   </section>
 
   <script>
     const backendUrl = "https://forexbot-backend.onrender.com";
+
+    const chartFrame = document.getElementById("chart-frame");
     const pairSelect = document.getElementById("pair-select");
     const runStatus = document.getElementById("run-status");
-    const chartFrame = document.getElementById("chart-frame");
 
     pairSelect.addEventListener("change", () => {
       const tvSymbol = pairSelect.value.replace("_", "");
@@ -69,7 +73,6 @@
     document.getElementById("run-bot").addEventListener("click", async () => {
       const symbol = pairSelect.value;
       runStatus.textContent = "Running bot for " + symbol + "...";
-
       try {
         const res = await fetch(backendUrl + "/run", {
           method: "POST",
@@ -79,10 +82,30 @@
         const data = await res.json();
         const action = data.trade?.action?.toUpperCase() || "HOLD";
         runStatus.textContent = `Bot executed for ${symbol}: ${action}`;
+        loadAccountSummary();
       } catch (err) {
         runStatus.textContent = "Error running bot.";
         console.error(err);
       }
+    });
+
+    async function loadAccountSummary() {
+      try {
+        const res = await fetch(backendUrl + "/account-summary");
+        const data = await res.json();
+        document.getElementById("balance").textContent = "$" + parseFloat(data.balance).toFixed(2);
+        document.getElementById("equity").textContent = "$" + parseFloat(data.equity).toFixed(2);
+        document.getElementById("marginUsed").textContent = data.marginUsed;
+        document.getElementById("monthlyPL").textContent = "$" + parseFloat(data.unrealizedPL).toFixed(2);
+      } catch (err) {
+        console.error("Failed to load account summary:", err);
+      }
+    }
+
+    document.getElementById("refresh-summary").addEventListener("click", loadAccountSummary);
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadAccountSummary();
     });
   </script>
 </body>
