@@ -22,72 +22,32 @@
 
   <p id="run-status" class="mb-6 text-sm text-green-400"></p>
 
-  <!-- Live Chart -->
-  <section class="mb-8">
-    <h2 class="text-2xl font-semibold mb-2">Live Chart</h2>
-    <iframe id="chart-frame" class="rounded-lg" width="100%" height="400" frameborder="0"
-      allowtransparency="true" scrolling="no"
-      src="https://s.tradingview.com/widgetembed/?symbol=OANDA:EURUSD&interval=30&theme=dark&style=1">
-    </iframe>
-  </section>
-
   <!-- Account Summary -->
-  <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <div class="bg-gray-800 p-4 rounded-lg">
-      <h2 class="text-xl font-bold mb-4">Bot Settings</h2>
-      <label class="block mb-1">Risk Level</label>
-      <input type="range" min="1" max="5" value="3" class="w-full">
-    </div>
-    <div class="bg-gray-800 p-4 rounded-lg">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-bold">Account Summary</h2>
+  <section class="bg-gray-800 p-4 rounded-lg mb-6">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-bold">Account Summary</h2>
+      <div class="flex items-center gap-3">
         <button id="refresh-summary" class="text-blue-400 hover:underline text-sm">Refresh</button>
+        <label class="text-sm text-gray-400">Auto Refresh:</label>
+        <select id="refresh-interval" class="bg-gray-700 text-white text-sm rounded p-1">
+          <option value="30000">30s</option>
+          <option value="60000" selected>60s</option>
+          <option value="120000">2m</option>
+          <option value="300000">5m</option>
+        </select>
       </div>
-      <ul class="text-gray-300 space-y-2">
-        <li>Balance: <span id="balance">$0.00</span></li>
-        <li>Equity: <span id="equity">$0.00</span></li>
-        <li>Margin Used: <span id="marginUsed">-</span></li>
-        <li>Monthly P/L: <span id="monthlyPL">$0.00</span></li>
-      </ul>
     </div>
-  </section>
-
-  <!-- Signals -->
-  <section class="mb-8 bg-gray-800 p-4 rounded-lg">
-    <h2 class="text-xl font-semibold mb-4">Trade Signals</h2>
-    <div class="text-gray-400">No active signals</div>
+    <ul class="text-gray-300 space-y-2">
+      <li>Balance: <span id="balance">$0.00</span></li>
+      <li>Equity: <span id="equity">$0.00</span></li>
+      <li>Margin Used: <span id="marginUsed">-</span></li>
+      <li>Monthly P/L: <span id="monthlyPL">$0.00</span></li>
+    </ul>
   </section>
 
   <script>
     const backendUrl = "https://forexbot-backend.onrender.com";
-
-    const chartFrame = document.getElementById("chart-frame");
-    const pairSelect = document.getElementById("pair-select");
-    const runStatus = document.getElementById("run-status");
-
-    pairSelect.addEventListener("change", () => {
-      const tvSymbol = pairSelect.value.replace("_", "");
-      chartFrame.src = `https://s.tradingview.com/widgetembed/?symbol=OANDA:${tvSymbol}&interval=30&theme=dark&style=1`;
-    });
-
-    document.getElementById("run-bot").addEventListener("click", async () => {
-      const symbol = pairSelect.value;
-      runStatus.textContent = "Running bot for " + symbol + "...";
-      try {
-        const res = await fetch(backendUrl + "/run", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ symbol })
-        });
-        const data = await res.json();
-        const action = data.trade?.action?.toUpperCase() || "HOLD";
-        runStatus.textContent = `Bot executed for ${symbol}: ${action}`;
-        loadAccountSummary();
-      } catch (err) {
-        runStatus.textContent = "Error running bot.";
-        console.error(err);
-      }
-    });
+    let refreshIntervalId = null;
 
     async function loadAccountSummary() {
       try {
@@ -102,10 +62,20 @@
       }
     }
 
+    function setAutoRefresh(intervalMs) {
+      if (refreshIntervalId) clearInterval(refreshIntervalId);
+      refreshIntervalId = setInterval(loadAccountSummary, intervalMs);
+    }
+
     document.getElementById("refresh-summary").addEventListener("click", loadAccountSummary);
+    document.getElementById("refresh-interval").addEventListener("change", (e) => {
+      setAutoRefresh(parseInt(e.target.value));
+    });
 
     document.addEventListener("DOMContentLoaded", () => {
       loadAccountSummary();
+      const initialInterval = parseInt(document.getElementById("refresh-interval").value);
+      setAutoRefresh(initialInterval);
     });
   </script>
 </body>
