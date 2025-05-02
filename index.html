@@ -22,18 +22,26 @@
 
   <p id="run-status" class="mb-6 text-sm text-green-400"></p>
 
-  <section class="mb-8">
-    <h2 class="text-2xl font-semibold mb-2">Live Chart</h2>
-    <iframe id="chart-frame" class="rounded-lg" width="100%" height="400" frameborder="0"
-      src="https://s.tradingview.com/widgetembed/?symbol=OANDA:EURUSD&interval=30&theme=dark&style=1"></iframe>
-  </section>
-
-  <!-- Account Summary -->
+  <!-- Account Summary and Bot Controls -->
   <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <div class="bg-gray-800 p-4 rounded-lg">
-      <h2 class="text-xl font-bold mb-4">Bot Settings</h2>
-      <input type="range" min="1" max="5" value="3" class="w-full">
+    <div class="bg-gray-800 p-4 rounded-lg space-y-4">
+      <h2 class="text-xl font-bold">Bot Controls</h2>
+      <div>
+        <label class="block mb-1">Risk Level</label>
+        <input type="range" min="1" max="5" value="3" id="risk-level" class="w-full">
+      </div>
+      <div>
+        <label class="block mb-1">Strategy</label>
+        <select id="strategy-select" class="bg-gray-700 text-white p-2 rounded w-full">
+          <option value="sma_rsi">SMA + RSI (Hybrid)</option>
+          <option value="macd">MACD</option>
+          <option value="bollinger">Bollinger Bands</option>
+          <option value="breakout">Breakout</option>
+        </select>
+      </div>
+      <button id="save-settings" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded w-full">Save Settings</button>
     </div>
+
     <div class="bg-gray-800 p-4 rounded-lg">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-bold">Account Summary</h2>
@@ -57,7 +65,7 @@
     </div>
   </section>
 
-  <!-- Trade History -->
+  <!-- Trade History & Logs -->
   <section class="mb-8">
     <h2 class="text-2xl font-semibold mb-2">Trade History</h2>
     <div class="overflow-x-auto">
@@ -75,7 +83,6 @@
     </div>
   </section>
 
-  <!-- Logs -->
   <section class="mb-8 bg-gray-800 p-4 rounded-lg">
     <h2 class="text-2xl font-semibold mb-4">Bot Logs</h2>
     <ul id="logs" class="space-y-2 text-sm text-gray-300 overflow-auto max-h-64"></ul>
@@ -85,89 +92,80 @@
     const backendUrl = "https://forexbot-backend.onrender.com";
     let refreshIntervalId = null;
 
-    const pairSelect = document.getElementById("pair-select");
-    const chartFrame = document.getElementById("chart-frame");
-    const intervalSelect = document.getElementById("refresh-interval");
-
-    function setAutoRefresh(intervalMs) {
-      if (refreshIntervalId) clearInterval(refreshIntervalId);
-      refreshIntervalId = setInterval(loadAccountSummary, intervalMs);
-    }
-
-    document.getElementById("refresh-summary").addEventListener("click", loadAccountSummary);
-    intervalSelect.addEventListener("change", e => setAutoRefresh(parseInt(e.target.value)));
-
     async function loadAccountSummary() {
-      try {
-        const res = await fetch(backendUrl + "/account-summary");
-        const data = await res.json();
-        document.getElementById("balance").textContent = "$" + parseFloat(data.balance).toFixed(2);
-        document.getElementById("equity").textContent = "$" + parseFloat(data.equity).toFixed(2);
-        document.getElementById("marginUsed").textContent = data.marginUsed;
-        document.getElementById("monthlyPL").textContent = "$" + parseFloat(data.unrealizedPL).toFixed(2);
-      } catch (err) {
-        console.error("Account summary error", err);
-      }
+      const res = await fetch(backendUrl + "/account-summary");
+      const data = await res.json();
+      document.getElementById("balance").textContent = "$" + parseFloat(data.balance).toFixed(2);
+      document.getElementById("equity").textContent = "$" + parseFloat(data.equity).toFixed(2);
+      document.getElementById("marginUsed").textContent = data.marginUsed;
+      document.getElementById("monthlyPL").textContent = "$" + parseFloat(data.unrealizedPL).toFixed(2);
     }
 
     async function loadTrades() {
-      try {
-        const res = await fetch(backendUrl + "/trades");
-        const trades = await res.json();
-        const table = document.getElementById("trade-history");
-        table.innerHTML = "";
-        trades.reverse().forEach(t => {
-          const row = document.createElement("tr");
-          row.innerHTML = `<td class="px-4 py-2">${t.symbol}</td>
-                           <td class="px-4 py-2 text-${t.action === 'buy' ? 'green' : t.action === 'sell' ? 'red' : 'gray'}-400 font-bold">${t.action.toUpperCase()}</td>
-                           <td class="px-4 py-2">${parseFloat(t.price).toFixed(5)}</td>
-                           <td class="px-4 py-2">${new Date(t.timestamp).toLocaleString()}</td>`;
-          table.appendChild(row);
-        });
-      } catch (err) {
-        console.error("Trade history error", err);
-      }
+      const res = await fetch(backendUrl + "/trades");
+      const trades = await res.json();
+      const table = document.getElementById("trade-history");
+      table.innerHTML = "";
+      trades.reverse().forEach(t => {
+        const row = document.createElement("tr");
+        row.innerHTML = \`<td class="px-4 py-2">\${t.symbol}</td>
+                         <td class="px-4 py-2 text-\${t.action === 'buy' ? 'green' : t.action === 'sell' ? 'red' : 'gray'}-400 font-bold">\${t.action.toUpperCase()}</td>
+                         <td class="px-4 py-2">\${parseFloat(t.price).toFixed(5)}</td>
+                         <td class="px-4 py-2">\${new Date(t.timestamp).toLocaleString()}</td>\`;
+        table.appendChild(row);
+      });
     }
 
     async function loadLogs() {
-      try {
-        const res = await fetch(backendUrl + "/logs");
-        const logs = await res.json();
-        const container = document.getElementById("logs");
-        container.innerHTML = "";
-        logs.reverse().forEach(log => {
-          const li = document.createElement("li");
-          li.textContent = `[${log.timestamp}] ${log.symbol}: ${log.action.toUpperCase()} - ${log.reason}`;
-          container.appendChild(li);
-        });
-      } catch (err) {
-        console.error("Logs error", err);
-      }
+      const res = await fetch(backendUrl + "/logs");
+      const logs = await res.json();
+      const container = document.getElementById("logs");
+      container.innerHTML = "";
+      logs.reverse().forEach(log => {
+        const li = document.createElement("li");
+        li.textContent = \`[\${log.timestamp}] \${log.symbol}: \${log.action.toUpperCase()} - \${log.reason}\`;
+        container.appendChild(li);
+      });
     }
 
+    function setAutoRefresh(ms) {
+      if (refreshIntervalId) clearInterval(refreshIntervalId);
+      refreshIntervalId = setInterval(loadAccountSummary, ms);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadAccountSummary();
+      loadTrades();
+      loadLogs();
+      setAutoRefresh(parseInt(document.getElementById("refresh-interval").value));
+    });
+
+    document.getElementById("refresh-summary").addEventListener("click", loadAccountSummary);
+    document.getElementById("refresh-interval").addEventListener("change", e => setAutoRefresh(parseInt(e.target.value)));
+
+    document.getElementById("save-settings").addEventListener("click", async () => {
+      const risk = document.getElementById("risk-level").value;
+      const strategy = document.getElementById("strategy-select").value;
+      await fetch(backendUrl + "/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ risk_level: parseInt(risk), strategy })
+      });
+      alert("Settings saved!");
+    });
+
     document.getElementById("run-bot").addEventListener("click", async () => {
-      const symbol = pairSelect.value;
-      document.getElementById("run-status").textContent = "Running bot...";
+      const symbol = document.getElementById("pair-select").value;
       const res = await fetch(backendUrl + "/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ symbol })
       });
       const data = await res.json();
-      const action = data.trade?.action?.toUpperCase() || "HOLD";
-      document.getElementById("run-status").textContent = `Bot executed for ${symbol}: ${action}`;
+      document.getElementById("run-status").textContent = \`Bot executed: \${data.trade?.action?.toUpperCase() || "HOLD"}\`;
       loadTrades();
       loadLogs();
       loadAccountSummary();
-    });
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const tvSymbol = pairSelect.value.replace("_", "");
-      chartFrame.src = `https://s.tradingview.com/widgetembed/?symbol=OANDA:${tvSymbol}&interval=30&theme=dark&style=1`;
-      loadAccountSummary();
-      loadTrades();
-      loadLogs();
-      setAutoRefresh(parseInt(intervalSelect.value));
     });
   </script>
 </body>
