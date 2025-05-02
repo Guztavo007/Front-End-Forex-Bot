@@ -1,672 +1,73 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forex Trading Bot Dashboard</title>
+    <title>Forex Bot Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .chart-container {
-            height: 400px;
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            border-radius: 0.5rem;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .chart-placeholder {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #64748b;
-            font-size: 1.2rem;
-        }
-        
-        .price-up {
-            color: #10b981;
-        }
-        
-        .price-down {
-            color: #ef4444;
-        }
-        
-        .blink {
-            animation: blink-animation 1s steps(5, start) infinite;
-        }
-        
-        @keyframes blink-animation {
-            to {
-                opacity: 0.5;
-            }
-        }
-        
-        .glow {
-            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
-        }
-        
-        .tradingview-widget-container {
-            height: 100%;
-            width: 100%;
-        }
-        
-        /* Modal styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 50;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-        }
-        
-        .modal-content {
-            background-color: #1e293b;
-            margin: 10% auto;
-            padding: 2rem;
-            border-radius: 0.5rem;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            animation: modalFadeIn 0.3s;
-        }
-        
-        @keyframes modalFadeIn {
-            from {opacity: 0; transform: translateY(-20px);}
-            to {opacity: 1; transform: translateY(0);}
-        }
-        
-        .api-key-input {
-            background-color: #0f172a;
-            border: 1px solid #334155;
-            color: white;
-            padding: 0.75rem;
-            border-radius: 0.25rem;
-            width: 100%;
-            margin-top: 0.5rem;
-            font-family: monospace;
-        }
-        
-        .api-key-input:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
-        }
-        
-        .copy-btn {
-            position: absolute;
-            right: 0.5rem;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: #64748b;
-            cursor: pointer;
-        }
-        
-        .copy-btn:hover {
-            color: #3b82f6;
-        }
-        
-        .input-group {
-            position: relative;
-            margin-bottom: 1.5rem;
-        }
-        
-        .test-connection-btn {
-            width: 100%;
-            padding: 0.75rem;
-            border-radius: 0.25rem;
-            font-weight: bold;
-            background-color: #3b82f6;
-            color: white;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        
-        .test-connection-btn:hover {
-            background-color: #2563eb;
-        }
-        
-        .test-connection-btn:disabled {
-            background-color: #64748b;
-            cursor: not-allowed;
-        }
-        
-        .connection-status {
-            margin-top: 1rem;
-            padding: 0.75rem;
-            border-radius: 0.25rem;
-            text-align: center;
-            font-weight: bold;
-            display: none;
-        }
-        
-        .connection-success {
-            background-color: rgba(16, 185, 129, 0.1);
-            color: #10b981;
-            border: 1px solid #10b981;
-        }
-        
-        .connection-error {
-            background-color: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
-            border: 1px solid #ef4444;
-        }
-        
-        .modal-footer {
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.75rem;
-            margin-top: 1.5rem;
-        }
-        
-        .modal-btn {
-            padding: 0.5rem 1rem;
-            border-radius: 0.25rem;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        
-        .modal-btn-primary {
-            background-color: #3b82f6;
-            color: white;
-            border: none;
-        }
-        
-        .modal-btn-primary:hover {
-            background-color: #2563eb;
-        }
-        
-        .modal-btn-secondary {
-            background-color: transparent;
-            color: #94a3b8;
-            border: 1px solid #334155;
-        }
-        
-        .modal-btn-secondary:hover {
-            background-color: #1e293b;
-        }
-    </style>
 </head>
-<body class="bg-gray-900 text-gray-200">
-    <div class="container mx-auto px-4 py-6">
-        <!-- Header -->
-        <header class="flex justify-between items-center mb-8">
-            <div class="flex items-center space-x-4">
-                <i class="fas fa-robot text-blue-500 text-3xl"></i>
-                <h1 class="text-2xl font-bold">Forex AutoTrader PRO</h1>
-            </div>
-            <div class="flex items-center space-x-4">
-                <div class="bg-gray-800 px-4 py-2 rounded-lg">
-                    <span class="text-gray-400">Connected to:</span>
-                    <span class="text-blue-400 ml-2" id="broker-display">OANDA</span>
-                    <span class="ml-2 text-green-400" id="connection-status-icon"><i class="fas fa-circle"></i></span>
-                </div>
-                <button class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg" id="settings-btn">
-                    <i class="fas fa-cog mr-2"></i>Settings
-                </button>
-            </div>
-        </header>
+<body class="bg-gray-900 text-white p-8">
+    <h1 class="text-3xl font-bold mb-4">Forex Bot Dashboard</h1>
 
-        <!-- API Key Modal -->
-        <div id="api-key-modal" class="modal">
-            <div class="modal-content">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold">Connect to OANDA</h2>
-                    <button id="close-modal" class="text-gray-400 hover:text-gray-200">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                
-                <p class="text-gray-400 mb-6">Enter your OANDA API key to connect your trading account to the bot.</p>
-                
-                <div class="input-group">
-                    <label for="api-key" class="block text-sm font-medium text-gray-300">API Key</label>
-                    <div class="relative">
-                        <input type="password" id="api-key" class="api-key-input" placeholder="Paste your OANDA API key here">
-                        <button class="copy-btn" id="paste-btn">
-                            <i class="fas fa-paste"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="input-group">
-                    <label for="account-id" class="block text-sm font-medium text-gray-300">Account ID (Optional)</label>
-                    <input type="text" id="account-id" class="api-key-input" placeholder="Your OANDA account ID">
-                </div>
-                
-                <div class="mb-4">
-                    <label class="flex items-center">
-                        <input type="checkbox" id="demo-account" class="rounded bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-500">
-                        <span class="ml-2 text-sm text-gray-300">This is a demo account</span>
-                    </label>
-                </div>
-                
-                <button id="test-connection-btn" class="test-connection-btn">
-                    <i class="fas fa-plug mr-2"></i>Test Connection
-                </button>
-                
-                <div id="connection-status" class="connection-status">
-                    <i class="fas fa-check-circle mr-2"></i>
-                    <span>Connection successful!</span>
-                </div>
-                
-                <div class="modal-footer">
-                    <button id="cancel-btn" class="modal-btn modal-btn-secondary">Cancel</button>
-                    <button id="save-btn" class="modal-btn modal-btn-primary" disabled>Save & Connect</button>
-                </div>
-            </div>
-        </div>
+    <!-- Run Bot Button -->
+    <button id="run-bot" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded mb-4">Run Bot Now</button>
+    <p id="run-status" class="mb-6"></p>
 
-        <!-- Main Dashboard -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Left Column -->
-            <div class="lg:col-span-2 space-y-6">
-                <!-- Chart Section -->
-                <div class="bg-gray-800 rounded-xl p-4 shadow-lg">
-                    <div class="flex justify-between items-center mb-4">
-                        <div class="flex items-center space-x-4">
-                            <h2 class="text-xl font-semibold">EUR/USD</h2>
-                            <div class="text-lg">
-                                <span class="price-up" id="eur-usd-price">1.0954</span>
-                                <span class="text-gray-400 ml-2">+0.24%</span>
-                            </div>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded">1H</button>
-                            <button class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded">4H</button>
-                            <button class="bg-blue-600 px-3 py-1 rounded">D</button>
-                            <button class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded">W</button>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-container">
-                        <div class="chart-placeholder">
-                            <i class="fas fa-chart-line text-4xl mb-2"></i>
-                            <p>Live price chart would appear here</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Bot Controls -->
-                <div class="bg-gray-800 rounded-xl p-4 shadow-lg">
-                    <h2 class="text-xl font-semibold mb-4">Bot Controls</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="bg-gray-700 p-4 rounded-lg">
-                            <h3 class="text-gray-400 mb-2">Trading Status</h3>
-                            <div class="flex items-center justify-between">
-                                <span class="text-xl font-bold text-green-400">ACTIVE</span>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" checked class="sr-only peer">
-                                    <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-gray-700 p-4 rounded-lg">
-                            <h3 class="text-gray-400 mb-2">Risk Level</h3>
-                            <div class="flex items-center space-x-2">
-                                <input type="range" min="1" max="5" value="3" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
-                                <span class="text-lg font-bold">3/5</span>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-gray-700 p-4 rounded-lg">
-                            <h3 class="text-gray-400 mb-2">Daily Target</h3>
-                            <div class="flex items-center justify-between">
-                                <span class="text-xl font-bold">1.5%</span>
-                                <button class="text-blue-400 hover:text-blue-300">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-6 grid grid-cols-2 gap-4">
-                        <button class="bg-green-600 hover:bg-green-700 py-3 rounded-lg font-bold flex items-center justify-center">
-                            <i class="fas fa-play mr-2"></i> Start Session
-                        </button>
-                        <button class="bg-red-600 hover:bg-red-700 py-3 rounded-lg font-bold flex items-center justify-center">
-                            <i class="fas fa-stop mr-2"></i> Emergency Stop
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Right Column -->
-            <div class="space-y-6">
-                <!-- Account Summary -->
-                <div class="bg-gray-800 rounded-xl p-4 shadow-lg">
-                    <h2 class="text-xl font-semibold mb-4">Account Summary</h2>
-                    <div class="space-y-3">
-                        <div class="flex justify-between">
-                            <span class="text-gray-400">Balance:</span>
-                            <span class="font-bold">$10,245.67</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-400">Equity:</span>
-                            <span class="font-bold">$10,532.12</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-400">Margin Used:</span>
-                            <span class="font-bold">$1,245.50 (12%)</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-400">Today's P/L:</span>
-                            <span class="font-bold text-green-400">+$286.45</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-400">Monthly P/L:</span>
-                            <span class="font-bold text-green-400">+$1,245.78</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Open Positions -->
-                <div class="bg-gray-800 rounded-xl p-4 shadow-lg">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-semibold">Open Positions</h2>
-                        <span class="bg-blue-900 text-blue-300 px-2 py-1 rounded text-sm">3 ACTIVE</span>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="bg-gray-700 p-3 rounded-lg">
-                            <div class="flex justify-between items-center">
-                                <div>
-                                    <span class="font-bold">EUR/USD</span>
-                                    <span class="text-sm text-gray-400 ml-2">BUY</span>
-                                </div>
-                                <span class="text-green-400 font-bold">+1.2%</span>
-                            </div>
-                            <div class="flex justify-between text-sm mt-1">
-                                <span>Size: 0.5 lots</span>
-                                <span>Open: 1.0924</span>
-                                <span>Now: <span class="text-green-400">1.0954</span></span>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-gray-700 p-3 rounded-lg">
-                            <div class="flex justify-between items-center">
-                                <div>
-                                    <span class="font-bold">USD/JPY</span>
-                                    <span class="text-sm text-gray-400 ml-2">SELL</span>
-                                </div>
-                                <span class="text-red-400 font-bold">-0.4%</span>
-                            </div>
-                            <div class="flex justify-between text-sm mt-1">
-                                <span>Size: 0.3 lots</span>
-                                <span>Open: 143.24</span>
-                                <span>Now: <span class="text-red-400">143.56</span></span>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-gray-700 p-3 rounded-lg">
-                            <div class="flex justify-between items-center">
-                                <div>
-                                    <span class="font-bold">GBP/USD</span>
-                                    <span class="text-sm text-gray-400 ml-2">BUY</span>
-                                </div>
-                                <span class="text-green-400 font-bold">+0.8%</span>
-                            </div>
-                            <div class="flex justify-between text-sm mt-1">
-                                <span>Size: 0.4 lots</span>
-                                <span>Open: 1.2745</span>
-                                <span>Now: <span class="text-green-400">1.2789</span></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Trading Signals -->
-                <div class="bg-gray-800 rounded-xl p-4 shadow-lg">
-                    <h2 class="text-xl font-semibold mb-4">Trading Signals</h2>
-                    <div class="space-y-3">
-                        <div class="bg-gray-700 p-3 rounded-lg border-l-4 border-blue-500">
-                            <div class="flex justify-between">
-                                <span class="font-bold">EUR/USD</span>
-                                <span class="text-xs bg-blue-500 text-white px-2 py-1 rounded">NEW</span>
-                            </div>
-                            <p class="text-sm mt-1">Strong bullish momentum detected on 4H chart</p>
-                            <div class="flex justify-between text-xs mt-2 text-gray-400">
-                                <span>2 min ago</span>
-                                <button class="text-blue-400 hover:text-blue-300">View Details</button>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-gray-700 p-3 rounded-lg border-l-4 border-yellow-500">
-                            <div class="flex justify-between">
-                                <span class="font-bold">USD/JPY</span>
-                                <span class="text-xs bg-yellow-500 text-white px-2 py-1 rounded">PENDING</span>
-                            </div>
-                            <p class="text-sm mt-1">Potential reversal at resistance level 143.80</p>
-                            <div class="flex justify-between text-xs mt-2 text-gray-400">
-                                <span>15 min ago</span>
-                                <button class="text-blue-400 hover:text-blue-300">View Details</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Recent Activity -->
-        <div class="mt-8 bg-gray-800 rounded-xl p-4 shadow-lg">
-            <h2 class="text-xl font-semibold mb-4">Recent Activity</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-700">
-                    <thead>
-                        <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Time</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Pair</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Action</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Size</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Price</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">P/L</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-700">
-                        <tr>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm">10:45:23</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm font-bold">EUR/USD</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-400">BUY</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm">0.5</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm">1.0924</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-400">+$65.00</td>
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm">09:30:12</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm font-bold">USD/JPY</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-red-400">SELL</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm">0.3</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm">143.24</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-red-400">-$24.50</td>
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm">08:15:47</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm font-bold">GBP/USD</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-400">BUY</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm">0.4</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm">1.2745</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-400">+$42.30</td>
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm">Yesterday</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm font-bold">AUD/USD</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-400">BUY</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm">0.2</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm">0.6612</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-400">+$18.75</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+    <!-- Trade History Table -->
+    <h2 class="text-2xl font-semibold mb-2">Trade History</h2>
+    <table class="min-w-full bg-gray-800 rounded">
+        <thead>
+            <tr class="bg-gray-700">
+                <th class="py-2 px-4 text-left">Symbol</th>
+                <th class="py-2 px-4 text-left">Action</th>
+                <th class="py-2 px-4 text-left">Price</th>
+                <th class="py-2 px-4 text-left">Timestamp</th>
+            </tr>
+        </thead>
+        <tbody id="trade-history"></tbody>
+    </table>
 
     <script>
-        // DOM Elements
-        const settingsBtn = document.getElementById('settings-btn');
-        const apiKeyModal = document.getElementById('api-key-modal');
-        const closeModalBtn = document.getElementById('close-modal');
-        const cancelBtn = document.getElementById('cancel-btn');
-        const saveBtn = document.getElementById('save-btn');
-        const testConnectionBtn = document.getElementById('test-connection-btn');
-        const apiKeyInput = document.getElementById('api-key');
-        const accountIdInput = document.getElementById('account-id');
-        const demoAccountCheckbox = document.getElementById('demo-account');
-        const pasteBtn = document.getElementById('paste-btn');
-        const connectionStatus = document.getElementById('connection-status');
-        const connectionStatusIcon = document.getElementById('connection-status-icon');
-        const brokerDisplay = document.getElementById('broker-display');
-        const eurUsdPrice = document.getElementById('eur-usd-price');
+        const backendUrl = "https://forexbot-backend.onrender.com";
 
-        // Modal control functions
-        function openModal() {
-            apiKeyModal.style.display = 'block';
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeModal() {
-            apiKeyModal.style.display = 'none';
-            document.body.style.overflow = 'auto';
-            resetConnectionStatus();
-        }
-
-        function resetConnectionStatus() {
-            connectionStatus.style.display = 'none';
-            connectionStatus.className = 'connection-status';
-            saveBtn.disabled = true;
-        }
-
-        // Event Listeners
-        settingsBtn.addEventListener('click', openModal);
-        closeModalBtn.addEventListener('click', closeModal);
-        cancelBtn.addEventListener('click', closeModal);
-
-        // Close modal when clicking outside
-        window.addEventListener('click', (event) => {
-            if (event.target === apiKeyModal) {
-                closeModal();
-            }
-        });
-
-        // Paste API key from clipboard
-        pasteBtn.addEventListener('click', async () => {
+        // Fetch and display trade history
+        async function loadTrades() {
             try {
-                const text = await navigator.clipboard.readText();
-                apiKeyInput.value = text;
+                const res = await fetch(backendUrl + "/trades");
+                const trades = await res.json();
+                const table = document.getElementById("trade-history");
+                table.innerHTML = "";
+                trades.reverse().forEach(t => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td class="py-2 px-4 border-b border-gray-700">{t.symbol}</td>
+                        <td class="py-2 px-4 border-b border-gray-700">{t.action.toUpperCase()}</td>
+                        <td class="py-2 px-4 border-b border-gray-700">{t.price.toFixed(5)}</td>
+                        <td class="py-2 px-4 border-b border-gray-700">{new Date(t.timestamp).toLocaleString()}</td>
+                    `;
+                    table.appendChild(row);
+                });
             } catch (err) {
-                console.error('Failed to read clipboard contents:', err);
-                alert('Could not access clipboard. Please paste manually.');
+                console.error("Failed to load trades:", err);
+            }
+        }
+
+        // Run bot on button click
+        document.getElementById("run-bot").addEventListener("click", async () => {
+            const status = document.getElementById("run-status");
+            status.textContent = "Running bot...";
+            try {
+                const res = await fetch(backendUrl + "/run", { method: "POST" });
+                const data = await res.json();
+                status.textContent = "Bot executed: " + (data.trade?.action?.toUpperCase() || "No trade");
+                loadTrades(); // refresh trade history
+            } catch (err) {
+                status.textContent = "Error running bot";
+                console.error(err);
             }
         });
 
-        // Test connection button handler
-        testConnectionBtn.addEventListener('click', () => {
-            const apiKey = apiKeyInput.value.trim();
-            
-            if (!apiKey) {
-                alert('Please enter your OANDA API key');
-                return;
-            }
-
-            // Simulate API connection test
-            testConnectionBtn.disabled = true;
-            testConnectionBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Testing...';
-            
-            setTimeout(() => {
-                // This is just a simulation - in a real app you would make an API call here
-                const isDemo = demoAccountCheckbox.checked;
-                const success = Math.random() > 0.2; // 80% chance of success for demo
-                
-                if (success) {
-                    connectionStatus.innerHTML = `
-                        <i class="fas fa-check-circle mr-2"></i>
-                        <span>Connection successful! ${isDemo ? 'Demo account detected.' : 'Live account detected.'}</span>
-                    `;
-                    connectionStatus.className = 'connection-status connection-success';
-                    saveBtn.disabled = false;
-                } else {
-                    connectionStatus.innerHTML = `
-                        <i class="fas fa-times-circle mr-2"></i>
-                        <span>Connection failed. Please check your API key and try again.</span>
-                    `;
-                    connectionStatus.className = 'connection-status connection-error';
-                    saveBtn.disabled = true;
-                }
-                
-                connectionStatus.style.display = 'block';
-                testConnectionBtn.disabled = false;
-                testConnectionBtn.innerHTML = '<i class="fas fa-plug mr-2"></i>Test Connection';
-            }, 1500);
-        });
-
-        // Save connection handler
-        saveBtn.addEventListener('click', () => {
-            const apiKey = apiKeyInput.value.trim();
-            const isDemo = demoAccountCheckbox.checked;
-            
-            // In a real app, you would save this to your backend/local storage
-            console.log('API Key saved:', apiKey);
-            console.log('Account type:', isDemo ? 'Demo' : 'Live');
-            
-            // Update UI to show connected status
-            brokerDisplay.textContent = `OANDA ${isDemo ? 'Demo' : 'Live'}`;
-            connectionStatusIcon.className = 'ml-2 text-green-400';
-            connectionStatusIcon.innerHTML = '<i class="fas fa-circle"></i>';
-            
-            closeModal();
-        });
-
-        // Simulate live price updates
-        function simulatePriceUpdates() {
-            let price = 1.0954;
-            
-            setInterval(() => {
-                // Random small price change
-                const change = (Math.random() - 0.5) * 0.0005;
-                price += change;
-                
-                // Format to 4 decimal places
-                const newPrice = price.toFixed(4);
-                
-                // Update display
-                eurUsdPrice.textContent = newPrice;
-                
-                // Change color based on direction
-                if (change > 0) {
-                    eurUsdPrice.classList.remove('price-down');
-                    eurUsdPrice.classList.add('price-up');
-                } else {
-                    eurUsdPrice.classList.remove('price-up');
-                    eurUsdPrice.classList.add('price-down');
-                }
-                
-                // Add blink effect for changes
-                eurUsdPrice.classList.add('blink');
-                setTimeout(() => {
-                    eurUsdPrice.classList.remove('blink');
-                }, 300);
-            }, 3000);
-        }
-        
-        // Toggle emergency stop button glow
-        function toggleEmergencyGlow() {
-            const emergencyBtn = document.querySelector('.bg-red-600');
-            setInterval(() => {
-                emergencyBtn.classList.toggle('glow');
-            }, 1000);
-        }
-        
-        // Initialize simulations
-        document.addEventListener('DOMContentLoaded', () => {
-            simulatePriceUpdates();
-            toggleEmergencyGlow();
-        });
+        loadTrades();
     </script>
-<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;display:inline-block;margin-right:3px;filter:brightness(0) invert(1);"><a href="https://enzostvs-deepsite.hf.space" style="color: #fff;text-decoration: underline;" target="_blank" >DeepSite</a> - 🧬 <a href="https://enzostvs-deepsite.hf.space?remix=Guztavo0007/forex-trading-bot-interface" style="color: #fff;text-decoration: underline;" target="_blank" >Remix</a></p></body>
+</body>
 </html>
