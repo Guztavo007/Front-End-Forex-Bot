@@ -3,34 +3,47 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Forex Bot Dashboard</title>
+    <title>Forex AutoTrader PRO</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-900 text-white p-8">
-    <h1 class="text-3xl font-bold mb-4">Forex Bot Dashboard</h1>
+<body class="bg-gray-900 text-white p-6 font-sans">
+    <header class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">Forex AutoTrader PRO</h1>
+        <button id="run-bot" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">
+            Run Bot Now
+        </button>
+    </header>
 
-    <!-- Run Bot Button -->
-    <button id="run-bot" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded mb-4">Run Bot Now</button>
-    <p id="run-status" class="mb-6"></p>
+    <p id="run-status" class="mb-6 text-sm text-green-400"></p>
 
-    <!-- Trade History Table -->
-    <h2 class="text-2xl font-semibold mb-2">Trade History</h2>
-    <table class="min-w-full bg-gray-800 rounded">
-        <thead>
-            <tr class="bg-gray-700">
-                <th class="py-2 px-4 text-left">Symbol</th>
-                <th class="py-2 px-4 text-left">Action</th>
-                <th class="py-2 px-4 text-left">Price</th>
-                <th class="py-2 px-4 text-left">Timestamp</th>
-            </tr>
-        </thead>
-        <tbody id="trade-history"></tbody>
-    </table>
+    <!-- Trade History -->
+    <section class="mb-8">
+        <h2 class="text-2xl font-semibold mb-2">Trade History</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-gray-800 rounded-lg overflow-hidden">
+                <thead class="bg-gray-700">
+                    <tr>
+                        <th class="px-4 py-2 text-left">Symbol</th>
+                        <th class="px-4 py-2 text-left">Action</th>
+                        <th class="px-4 py-2 text-left">Price</th>
+                        <th class="px-4 py-2 text-left">Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody id="trade-history" class="divide-y divide-gray-700"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Placeholder for additional UI -->
+    <section class="bg-gray-800 p-6 rounded-lg">
+        <h3 class="text-xl font-bold mb-4">Dashboard Overview</h3>
+        <p class="text-gray-400">Your dashboard components like charts, account summary, signals, etc., can be added below this section.</p>
+    </section>
 
     <script>
         const backendUrl = "https://forexbot-backend.onrender.com";
 
-        // Fetch and display trade history
+        // Load trade history
         async function loadTrades() {
             try {
                 const res = await fetch(backendUrl + "/trades");
@@ -40,33 +53,35 @@
                 trades.reverse().forEach(t => {
                     const row = document.createElement("tr");
                     row.innerHTML = `
-                        <td class="py-2 px-4 border-b border-gray-700">{t.symbol}</td>
-                        <td class="py-2 px-4 border-b border-gray-700">{t.action.toUpperCase()}</td>
-                        <td class="py-2 px-4 border-b border-gray-700">{t.price.toFixed(5)}</td>
-                        <td class="py-2 px-4 border-b border-gray-700">{new Date(t.timestamp).toLocaleString()}</td>
+                        <td class="px-4 py-2">{t.symbol}</td>
+                        <td class="px-4 py-2 text-${t.action === 'buy' ? 'green' : 'red'}-400 font-bold">{t.action.toUpperCase()}</td>
+                        <td class="px-4 py-2">{t.price.toFixed(5)}</td>
+                        <td class="px-4 py-2">{new Date(t.timestamp).toLocaleString()}</td>
                     `;
                     table.appendChild(row);
                 });
             } catch (err) {
-                console.error("Failed to load trades:", err);
+                console.error("Error loading trades:", err);
             }
         }
 
-        // Run bot on button click
+        // Handle "Run Bot Now" click
         document.getElementById("run-bot").addEventListener("click", async () => {
             const status = document.getElementById("run-status");
             status.textContent = "Running bot...";
             try {
                 const res = await fetch(backendUrl + "/run", { method: "POST" });
                 const data = await res.json();
-                status.textContent = "Bot executed: " + (data.trade?.action?.toUpperCase() || "No trade");
+                const action = data.trade?.action?.toUpperCase() || "HOLD";
+                status.textContent = "Bot executed: " + action;
                 loadTrades(); // refresh trade history
             } catch (err) {
-                status.textContent = "Error running bot";
+                status.textContent = "Error running bot.";
                 console.error(err);
             }
         });
 
+        // Initial load
         loadTrades();
     </script>
 </body>
