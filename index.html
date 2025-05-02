@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-900 text-white p-6 font-sans">
+
     <header class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">Forex AutoTrader PRO</h1>
         <button id="run-bot" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">
@@ -15,6 +16,34 @@
     </header>
 
     <p id="run-status" class="mb-6 text-sm text-green-400"></p>
+
+    <!-- Settings Panel -->
+    <section class="mb-8 bg-gray-800 p-6 rounded-lg">
+        <h2 class="text-xl font-semibold mb-4">Bot Settings</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block mb-1">Risk Level: <span id="risk-display">3</span></label>
+                <input type="range" id="risk-slider" min="1" max="5" value="3" class="w-full">
+            </div>
+            <div>
+                <label class="block mb-1">Strategy:</label>
+                <select id="strategy-select" class="w-full p-2 bg-gray-700 rounded">
+                    <option value="sma_rsi" selected>SMA + RSI</option>
+                    <option value="rsi_only">RSI Only</option>
+                    <option value="sma_only">SMA Only</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <!-- Live Chart -->
+    <section class="mb-8">
+        <h2 class="text-2xl font-semibold mb-2">Live EUR/USD Chart</h2>
+        <div class="overflow-hidden rounded-lg">
+            <iframe src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_eurusd&symbol=OANDA:EURUSD&interval=30&hidesidetoolbar=1&symboledit=1&saveimage=1&toolbarbg=F1F3F6&studies=[]&theme=dark&style=1&timezone=Etc/UTC&withdateranges=1&hideideas=1&allow_symbol_change=1"
+                width="100%" height="400" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
+        </div>
+    </section>
 
     <!-- Trade History -->
     <section class="mb-8">
@@ -34,16 +63,10 @@
         </div>
     </section>
 
-    <!-- Placeholder for additional UI -->
-    <section class="bg-gray-800 p-6 rounded-lg">
-        <h3 class="text-xl font-bold mb-4">Dashboard Overview</h3>
-        <p class="text-gray-400">Your dashboard components like charts, account summary, signals, etc., can be added below this section.</p>
-    </section>
-
     <script>
         const backendUrl = "https://forexbot-backend.onrender.com";
 
-        // Load trade history
+        // Load trades
         async function loadTrades() {
             try {
                 const res = await fetch(backendUrl + "/trades");
@@ -65,7 +88,7 @@
             }
         }
 
-        // Handle "Run Bot Now" click
+        // Run bot now
         document.getElementById("run-bot").addEventListener("click", async () => {
             const status = document.getElementById("run-status");
             status.textContent = "Running bot...";
@@ -74,14 +97,39 @@
                 const data = await res.json();
                 const action = data.trade?.action?.toUpperCase() || "HOLD";
                 status.textContent = "Bot executed: " + action;
-                loadTrades(); // refresh trade history
+                loadTrades();
             } catch (err) {
                 status.textContent = "Error running bot.";
                 console.error(err);
             }
         });
 
-        // Initial load
+        // Update risk display
+        const riskSlider = document.getElementById("risk-slider");
+        const riskDisplay = document.getElementById("risk-display");
+        riskSlider.addEventListener("input", () => {
+            riskDisplay.textContent = riskSlider.value;
+        });
+
+        // Submit settings change
+        const strategySelect = document.getElementById("strategy-select");
+        [riskSlider, strategySelect].forEach(el => el.addEventListener("change", async () => {
+            try {
+                await fetch(backendUrl + "/settings", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        risk_level: riskSlider.value,
+                        strategy: strategySelect.value
+                    })
+                });
+                console.log("Settings updated");
+            } catch (err) {
+                console.error("Failed to update settings:", err);
+            }
+        }));
+
+        // Initial trade load
         loadTrades();
     </script>
 </body>
