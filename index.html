@@ -1,172 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Forex AutoTrader PRO</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-900 text-white p-6 font-sans">
   <header class="flex justify-between items-center mb-6">
-    <div class="flex items-center gap-4">
-      <h1 class="text-3xl font-bold">Forex AutoTrader PRO</h1>
-      <select id="pair-select" class="bg-gray-700 text-white p-2 rounded">
-        <option value="EUR_USD">EUR/USD</option>
-        <option value="GBP_USD">GBP/USD</option>
-        <option value="USD_JPY">USD/JPY</option>
-      </select>
-    </div>
-    <button id="run-bot" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">
-      Run Bot Now
-    </button>
+    <h1 class="text-3xl font-bold">Forex AutoTrader PRO</h1>
   </header>
 
-  <p id="run-status" class="mb-6 text-sm text-green-400"></p>
-
-  <!-- Account Summary and Bot Controls -->
-  <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <div class="bg-gray-800 p-4 rounded-lg space-y-4">
-      <h2 class="text-xl font-bold">Bot Controls</h2>
-      <div>
-        <label class="block mb-1">Risk Level</label>
-        <input type="range" min="1" max="5" value="3" id="risk-level" class="w-full">
+  <!-- Alerts Settings Panel -->
+  <section class="mb-8 bg-gray-800 p-6 rounded-lg">
+    <h2 class="text-2xl font-semibold mb-4">Notification Settings</h2>
+    <form id="alerts-form" class="space-y-4">
+      <div class="flex items-center">
+        <input type="checkbox" id="alerts-enabled" class="mr-2">
+        <label for="alerts-enabled">Enable Discord Alerts</label>
       </div>
-      <div>
-        <label class="block mb-1">Strategy</label>
-        <select id="strategy-select" class="bg-gray-700 text-white p-2 rounded w-full">
-          <option value="sma_rsi">SMA + RSI (Hybrid)</option>
-          <option value="macd">MACD</option>
-          <option value="bollinger">Bollinger Bands</option>
-          <option value="breakout">Breakout</option>
-        </select>
-      </div>
-      <button id="save-settings" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded w-full">Save Settings</button>
-    </div>
-
-    <div class="bg-gray-800 p-4 rounded-lg">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-bold">Account Summary</h2>
-        <div class="flex items-center gap-3">
-          <button id="refresh-summary" class="text-blue-400 hover:underline text-sm">Refresh</button>
-          <label class="text-sm text-gray-400">Auto:</label>
-          <select id="refresh-interval" class="bg-gray-700 text-white text-sm rounded p-1">
-            <option value="30000">30s</option>
-            <option value="60000" selected>60s</option>
-            <option value="120000">2m</option>
-            <option value="300000">5m</option>
-          </select>
+      <div class="ml-4 space-y-2">
+        <div class="flex items-center">
+          <input type="checkbox" id="alert-trades" class="mr-2">
+          <label for="alert-trades">Trade Actions (BUY/SELL)</label>
+        </div>
+        <div class="flex items-center">
+          <input type="checkbox" id="alert-holds" class="mr-2">
+          <label for="alert-holds">HOLD Decisions</label>
+        </div>
+        <div class="flex items-center">
+          <input type="checkbox" id="alert-errors" class="mr-2">
+          <label for="alert-errors">Errors or Skipped Trades</label>
         </div>
       </div>
-      <ul class="text-gray-300 space-y-2">
-        <li>Balance: <span id="balance">$0.00</span></li>
-        <li>Equity: <span id="equity">$0.00</span></li>
-        <li>Margin Used: <span id="marginUsed">-</span></li>
-        <li>Monthly P/L: <span id="monthlyPL">$0.00</span></li>
-      </ul>
-    </div>
-  </section>
-
-  <!-- Trade History & Logs -->
-  <section class="mb-8">
-    <h2 class="text-2xl font-semibold mb-2">Trade History</h2>
-    <div class="overflow-x-auto">
-      <table class="min-w-full bg-gray-800 rounded-lg overflow-hidden">
-        <thead class="bg-gray-700">
-          <tr>
-            <th class="px-4 py-2 text-left">Symbol</th>
-            <th class="px-4 py-2 text-left">Action</th>
-            <th class="px-4 py-2 text-left">Price</th>
-            <th class="px-4 py-2 text-left">Timestamp</th>
-          </tr>
-        </thead>
-        <tbody id="trade-history" class="divide-y divide-gray-700"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <section class="mb-8 bg-gray-800 p-4 rounded-lg">
-    <h2 class="text-2xl font-semibold mb-4">Bot Logs</h2>
-    <ul id="logs" class="space-y-2 text-sm text-gray-300 overflow-auto max-h-64"></ul>
+      <button type="submit" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded">Save Alerts Settings</button>
+    </form>
   </section>
 
   <script>
-    const backendUrl = "https://forexbot-backend.onrender.com";
-    let refreshIntervalId = null;
+    const alertsKey = "alerts-settings";
 
-    async function loadAccountSummary() {
-      const res = await fetch(backendUrl + "/account-summary");
-      const data = await res.json();
-      document.getElementById("balance").textContent = "$" + parseFloat(data.balance).toFixed(2);
-      document.getElementById("equity").textContent = "$" + parseFloat(data.equity).toFixed(2);
-      document.getElementById("marginUsed").textContent = data.marginUsed;
-      document.getElementById("monthlyPL").textContent = "$" + parseFloat(data.unrealizedPL).toFixed(2);
+    function loadAlertSettings() {
+      const saved = localStorage.getItem(alertsKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        document.getElementById("alerts-enabled").checked = parsed.enabled;
+        document.getElementById("alert-trades").checked = parsed.trades;
+        document.getElementById("alert-holds").checked = parsed.holds;
+        document.getElementById("alert-errors").checked = parsed.errors;
+      }
     }
 
-    async function loadTrades() {
-      const res = await fetch(backendUrl + "/trades");
-      const trades = await res.json();
-      const table = document.getElementById("trade-history");
-      table.innerHTML = "";
-      trades.reverse().forEach(t => {
-        const row = document.createElement("tr");
-        row.innerHTML = \`<td class="px-4 py-2">\${t.symbol}</td>
-                         <td class="px-4 py-2 text-\${t.action === 'buy' ? 'green' : t.action === 'sell' ? 'red' : 'gray'}-400 font-bold">\${t.action.toUpperCase()}</td>
-                         <td class="px-4 py-2">\${parseFloat(t.price).toFixed(5)}</td>
-                         <td class="px-4 py-2">\${new Date(t.timestamp).toLocaleString()}</td>\`;
-        table.appendChild(row);
-      });
+    function saveAlertSettings(e) {
+      e.preventDefault();
+      const settings = {
+        enabled: document.getElementById("alerts-enabled").checked,
+        trades: document.getElementById("alert-trades").checked,
+        holds: document.getElementById("alert-holds").checked,
+        errors: document.getElementById("alert-errors").checked
+      };
+      localStorage.setItem(alertsKey, JSON.stringify(settings));
+      alert("Alert settings saved.");
     }
 
-    async function loadLogs() {
-      const res = await fetch(backendUrl + "/logs");
-      const logs = await res.json();
-      const container = document.getElementById("logs");
-      container.innerHTML = "";
-      logs.reverse().forEach(log => {
-        const li = document.createElement("li");
-        li.textContent = \`[\${log.timestamp}] \${log.symbol}: \${log.action.toUpperCase()} - \${log.reason}\`;
-        container.appendChild(li);
-      });
-    }
-
-    function setAutoRefresh(ms) {
-      if (refreshIntervalId) clearInterval(refreshIntervalId);
-      refreshIntervalId = setInterval(loadAccountSummary, ms);
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      loadAccountSummary();
-      loadTrades();
-      loadLogs();
-      setAutoRefresh(parseInt(document.getElementById("refresh-interval").value));
-    });
-
-    document.getElementById("refresh-summary").addEventListener("click", loadAccountSummary);
-    document.getElementById("refresh-interval").addEventListener("change", e => setAutoRefresh(parseInt(e.target.value)));
-
-    document.getElementById("save-settings").addEventListener("click", async () => {
-      const risk = document.getElementById("risk-level").value;
-      const strategy = document.getElementById("strategy-select").value;
-      await fetch(backendUrl + "/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ risk_level: parseInt(risk), strategy })
-      });
-      alert("Settings saved!");
-    });
-
-    document.getElementById("run-bot").addEventListener("click", async () => {
-      const symbol = document.getElementById("pair-select").value;
-      const res = await fetch(backendUrl + "/run", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ symbol })
-      });
-      const data = await res.json();
-      document.getElementById("run-status").textContent = \`Bot executed: \${data.trade?.action?.toUpperCase() || "HOLD"}\`;
-      loadTrades();
-      loadLogs();
-      loadAccountSummary();
-    });
+    document.getElementById("alerts-form").addEventListener("submit", saveAlertSettings);
+    document.addEventListener("DOMContentLoaded", loadAlertSettings);
   </script>
 </body>
 </html>
