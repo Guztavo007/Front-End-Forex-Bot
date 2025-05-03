@@ -1,81 +1,31 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Forex AutoTrader PRO</title>
+  <title>Forex Bot UI</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-gray-900 text-white p-6 font-sans">
-  <header class="flex justify-between items-center mb-6">
-    <h1 class="text-3xl font-bold">Forex AutoTrader PRO</h1>
-    <div>
-      <select id="symbol-select" class="bg-gray-700 text-white p-2 rounded">
-        <option value="EUR_USD">EUR/USD</option>
-        <option value="GBP_USD">GBP/USD</option>
-        <option value="USD_JPY">USD/JPY</option>
-      </select>
-      <button onclick="runBot()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded ml-2">
-        Run Bot Now
-      </button>
-    </div>
-  </header>
-
-  <section class="mb-8 bg-gray-800 p-6 rounded-lg">
-    <h2 class="text-xl font-semibold mb-4">Live Chart</h2>
-    <iframe src="https://s.tradingview.com/widgetembed/?symbol=OANDA:EURUSD&interval=30&hidesidetoolbar=1&symboledit=1&saveimage=1&toolbarbg=F1F3F6&studies=[]&theme=dark&style=1&timezone=Etc/UTC&withdateranges=1&hideideas=1&hidelegend=1&studies_overrides={}" class="w-full h-96 rounded"></iframe>
-  </section>
-
-  <section class="mb-8 bg-gray-800 p-6 rounded-lg">
-    <h2 class="text-xl font-semibold mb-4">Bot Settings</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label for="risk-level" class="block text-sm mb-1">Risk Level</label>
-        <input type="range" min="1" max="5" value="3" id="risk-level" class="w-full">
-      </div>
-      <div>
-        <label for="strategy-select" class="block text-sm mb-1">Strategy</label>
-        <select id="strategy-select" class="bg-gray-700 text-white p-2 rounded w-full">
-          <option value="sma_rsi">SMA + RSI (Hybrid)</option>
-          <option value="macd">MACD</option>
-          <option value="bollinger">Bollinger Bands</option>
-          <option value="breakout">Breakout</option>
-        </select>
-      </div>
-    </div>
-    <button id="save-settings" class="mt-4 bg-green-600 hover:bg-green-700 px-4 py-2 rounded">Save Settings</button>
-    <p id="trade-status" class="mt-2 text-sm text-green-400"></p>
-  </section>
-
+<body class="bg-gray-900 text-white p-4">
+  <div class="flex items-center gap-4 mb-4">
+    <select id="symbol-select" class="text-black p-2 rounded">
+      <option value="EURUSD">EUR/USD</option>
+      <option value="USDJPY">USD/JPY</option>
+    </select>
+    <button onclick="runBot()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">Run Bot Now</button>
+  </div>
   <script>
-    const backendUrl = "https://forexbot-backend.onrender.com";
-
     async function runBot() {
       const symbol = document.getElementById("symbol-select").value;
       const alerts = JSON.parse(localStorage.getItem("alerts-settings") || "{}");
-
-      const response = await fetch(backendUrl + "/run", {
+      const payload = { symbol, alerts };
+      console.log("Running bot with:", payload);
+      await fetch("https://forexbot-backend.onrender.com/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ symbol, alerts })
+        body: JSON.stringify(payload)
       });
-
-      const data = await response.json();
-      console.log("Trade executed:", data);
-      const status = document.getElementById("trade-status");
-      status.textContent = "Bot executed: " + data.action.toLowerCase();
     }
-
-    document.getElementById("save-settings").addEventListener("click", async () => {
-      const risk = document.getElementById("risk-level").value;
-      const strategy = document.getElementById("strategy-select").value;
-      await fetch(backendUrl + "/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ risk_level: parseInt(risk), strategy })
-      });
-      alert("Settings saved.");
-    });
   </script>
 </body>
 </html>
