@@ -9,28 +9,27 @@
 <body class="bg-gray-900 text-white p-6 font-sans">
   <header class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-bold">Forex AutoTrader PRO</h1>
-    <div>
-      <select id="pair-select" class="bg-gray-700 text-white p-2 rounded">
-        <option value="EURUSD">EUR/USD</option>
-        <option value="USDJPY">USD/JPY</option>
-        <option value="GBPUSD">GBP/USD</option>
-        <option value="AUDUSD">AUD/USD</option>
+    <div class="flex items-center gap-2">
+      <select id="symbol-select" class="bg-gray-700 text-white p-2 rounded">
+        <option value="EUR_USD">EUR/USD</option>
+        <option value="GBP_USD">GBP/USD</option>
+        <option value="USD_JPY">USD/JPY</option>
       </select>
-      <button id="run-bot" class="ml-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">Run Bot Now</button>
+      <button onclick="runBot()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">
+        Run Bot Now
+      </button>
     </div>
   </header>
 
-  <!-- Chart -->
-  <section class="mb-8 bg-gray-800 p-6 rounded-lg h-[400px]">
+  <!-- Live Chart -->
+  <section class="mb-8 bg-gray-800 p-6 rounded-lg">
     <h2 class="text-xl font-semibold mb-4">Live Chart</h2>
-    <iframe id="chart-frame"
-      class="w-full h-full rounded"
-      frameborder="0"
-      allowfullscreen>
-    </iframe>
+    <div class="rounded overflow-hidden">
+      <iframe src="https://s.tradingview.com/widgetembed/?symbol=OANDA:EURUSD&interval=30&hidesidetoolbar=1&symboledit=1&saveimage=1&toolbarbg=F1F3F6&studies=[]&theme=dark&style=1&timezone=Etc/UTC" width="100%" height="400" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
+    </div>
   </section>
 
-  <!-- Bot Controls -->
+  <!-- Bot Settings -->
   <section class="mb-8 bg-gray-800 p-6 rounded-lg">
     <h2 class="text-xl font-semibold mb-4">Bot Settings</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -49,7 +48,7 @@
       </div>
     </div>
     <button id="save-settings" class="mt-4 bg-green-600 hover:bg-green-700 px-4 py-2 rounded">Save Settings</button>
-    <p id="bot-status" class="mt-4 text-green-400 font-semibold"></p>
+    <p id="trade-status" class="mt-2 text-sm text-green-400"></p>
   </section>
 
   <!-- Performance Overview -->
@@ -80,11 +79,6 @@
 
   <script>
     const backendUrl = "https://forexbot-backend.onrender.com";
-
-    function updateChart(symbol) {
-      const iframe = document.getElementById("chart-frame");
-      iframe.src = `https://s.tradingview.com/widgetembed/?symbol=OANDA:${symbol}&interval=30&theme=dark`;
-    }
 
     async function loadPerformance() {
       const res = await fetch(backendUrl + "/performance");
@@ -117,9 +111,8 @@
       });
     }
 
-    const alertsKey = "alerts-settings";
     function loadAlertSettings() {
-      const saved = localStorage.getItem(alertsKey);
+      const saved = localStorage.getItem("alerts-settings");
       if (saved) {
         const parsed = JSON.parse(saved);
         document.getElementById("alerts-enabled").checked = parsed.enabled;
@@ -137,8 +130,24 @@
         holds: document.getElementById("alert-holds").checked,
         errors: document.getElementById("alert-errors").checked
       };
-      localStorage.setItem(alertsKey, JSON.stringify(settings));
+      localStorage.setItem("alerts-settings", JSON.stringify(settings));
       alert("Alert settings saved.");
+    }
+
+    async function runBot() {
+      const symbol = document.getElementById("symbol-select").value;
+      const alerts = JSON.parse(localStorage.getItem("alerts-settings") || "{}");
+
+      const response = await fetch(backendUrl + "/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbol, alerts })
+      });
+
+      const data = await response.json();
+      console.log("Trade executed:", data);
+      const status = document.getElementById("trade-status");
+      status.textContent = "Bot executed: " + data.action.toLowerCase();
     }
 
     document.getElementById("alerts-form").addEventListener("submit", saveAlertSettings);
@@ -153,25 +162,9 @@
       alert("Settings saved.");
     });
 
-    document.getElementById("run-bot").addEventListener("click", async () => {
-      const symbol = document.getElementById("pair-select").value;
-      const alerts = JSON.parse(localStorage.getItem(alertsKey) || "{}");
-      const res = await fetch(backendUrl + "/run", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ symbol, alerts })
-      });
-      const data = await res.json();
-      document.getElementById("bot-status").textContent = `Bot executed: ${data.trade?.action || "HOLD"}`;
-    });
-
     document.addEventListener("DOMContentLoaded", () => {
       loadPerformance();
       loadAlertSettings();
-      updateChart(document.getElementById("pair-select").value);
-      document.getElementById("pair-select").addEventListener("change", (e) => {
-        updateChart(e.target.value);
-      });
     });
   </script>
 </body>
