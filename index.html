@@ -9,27 +9,23 @@
 <body class="bg-gray-900 text-white p-6 font-sans">
   <header class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-bold">Forex AutoTrader PRO</h1>
-    <div class="flex items-center gap-2">
+    <div>
       <select id="symbol-select" class="bg-gray-700 text-white p-2 rounded">
         <option value="EUR_USD">EUR/USD</option>
         <option value="GBP_USD">GBP/USD</option>
         <option value="USD_JPY">USD/JPY</option>
       </select>
-      <button onclick="runBot()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">
+      <button onclick="runBot()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded ml-2">
         Run Bot Now
       </button>
     </div>
   </header>
 
-  <!-- Live Chart -->
   <section class="mb-8 bg-gray-800 p-6 rounded-lg">
     <h2 class="text-xl font-semibold mb-4">Live Chart</h2>
-    <div class="rounded overflow-hidden">
-      <iframe src="https://s.tradingview.com/widgetembed/?symbol=OANDA:EURUSD&interval=30&hidesidetoolbar=1&symboledit=1&saveimage=1&toolbarbg=F1F3F6&studies=[]&theme=dark&style=1&timezone=Etc/UTC" width="100%" height="400" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
-    </div>
+    <iframe src="https://s.tradingview.com/widgetembed/?symbol=OANDA:EURUSD&interval=30&hidesidetoolbar=1&symboledit=1&saveimage=1&toolbarbg=F1F3F6&studies=[]&theme=dark&style=1&timezone=Etc/UTC&withdateranges=1&hideideas=1&hidelegend=1&studies_overrides={}" class="w-full h-96 rounded"></iframe>
   </section>
 
-  <!-- Bot Settings -->
   <section class="mb-8 bg-gray-800 p-6 rounded-lg">
     <h2 class="text-xl font-semibold mb-4">Bot Settings</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -51,88 +47,8 @@
     <p id="trade-status" class="mt-2 text-sm text-green-400"></p>
   </section>
 
-  <!-- Performance Overview -->
-  <section class="mb-8 bg-gray-800 p-6 rounded-lg">
-    <h2 class="text-2xl font-semibold mb-4">Performance Overview</h2>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <div class="bg-gray-700 p-4 rounded"><p class="text-sm text-gray-400">Total Trades</p><p id="perf-total" class="text-xl font-bold">0</p></div>
-      <div class="bg-gray-700 p-4 rounded"><p class="text-sm text-gray-400">Win Rate</p><p id="perf-winrate" class="text-xl font-bold">0%</p></div>
-      <div class="bg-gray-700 p-4 rounded"><p class="text-sm text-gray-400">Avg P/L</p><p id="perf-avg" class="text-xl font-bold">$0.00</p></div>
-      <div class="bg-gray-700 p-4 rounded"><p class="text-sm text-gray-400">Net Profit</p><p id="perf-net" class="text-xl font-bold">$0.00</p></div>
-    </div>
-    <canvas id="pl-chart" height="100"></canvas>
-  </section>
-
-  <!-- Notification Settings -->
-  <section class="mb-8 bg-gray-800 p-6 rounded-lg">
-    <h2 class="text-2xl font-semibold mb-4">Notification Settings</h2>
-    <form id="alerts-form" class="space-y-4">
-      <div class="flex items-center"><input type="checkbox" id="alerts-enabled" class="mr-2"><label for="alerts-enabled">Enable Discord Alerts</label></div>
-      <div class="ml-4 space-y-2">
-        <div class="flex items-center"><input type="checkbox" id="alert-trades" class="mr-2"><label for="alert-trades">Trade Actions (BUY/SELL)</label></div>
-        <div class="flex items-center"><input type="checkbox" id="alert-holds" class="mr-2"><label for="alert-holds">HOLD Decisions</label></div>
-        <div class="flex items-center"><input type="checkbox" id="alert-errors" class="mr-2"><label for="alert-errors">Errors or Skipped Trades</label></div>
-      </div>
-      <button type="submit" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded">Save Alerts Settings</button>
-    </form>
-  </section>
-
   <script>
     const backendUrl = "https://forexbot-backend.onrender.com";
-
-    async function loadPerformance() {
-      const res = await fetch(backendUrl + "/performance");
-      const data = await res.json();
-      document.getElementById("perf-total").textContent = data.total_trades;
-      document.getElementById("perf-winrate").textContent = (data.win_rate * 100).toFixed(1) + "%";
-      document.getElementById("perf-avg").textContent = "$" + data.average_pl.toFixed(2);
-      document.getElementById("perf-net").textContent = "$" + data.net_profit.toFixed(2);
-
-      const labels = data.performance_over_time.map(d => d.date);
-      const values = data.performance_over_time.map(d => d.pl);
-      const ctx = document.getElementById("pl-chart").getContext("2d");
-      new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [{
-            label: "Daily P/L",
-            data: values,
-            backgroundColor: values.map(v => v >= 0 ? "rgb(34 197 94)" : "rgb(239 68 68)")
-          }]
-        },
-        options: {
-          plugins: { legend: { display: false }},
-          scales: {
-            y: { ticks: { color: "#ccc" }, beginAtZero: true },
-            x: { ticks: { color: "#ccc" } }
-          }
-        }
-      });
-    }
-
-    function loadAlertSettings() {
-      const saved = localStorage.getItem("alerts-settings");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        document.getElementById("alerts-enabled").checked = parsed.enabled;
-        document.getElementById("alert-trades").checked = parsed.trades;
-        document.getElementById("alert-holds").checked = parsed.holds;
-        document.getElementById("alert-errors").checked = parsed.errors;
-      }
-    }
-
-    function saveAlertSettings(e) {
-      e.preventDefault();
-      const settings = {
-        enabled: document.getElementById("alerts-enabled").checked,
-        trades: document.getElementById("alert-trades").checked,
-        holds: document.getElementById("alert-holds").checked,
-        errors: document.getElementById("alert-errors").checked
-      };
-      localStorage.setItem("alerts-settings", JSON.stringify(settings));
-      alert("Alert settings saved.");
-    }
 
     async function runBot() {
       const symbol = document.getElementById("symbol-select").value;
@@ -150,7 +66,6 @@
       status.textContent = "Bot executed: " + data.action.toLowerCase();
     }
 
-    document.getElementById("alerts-form").addEventListener("submit", saveAlertSettings);
     document.getElementById("save-settings").addEventListener("click", async () => {
       const risk = document.getElementById("risk-level").value;
       const strategy = document.getElementById("strategy-select").value;
@@ -160,11 +75,6 @@
         body: JSON.stringify({ risk_level: parseInt(risk), strategy })
       });
       alert("Settings saved.");
-    });
-
-    document.addEventListener("DOMContentLoaded", () => {
-      loadPerformance();
-      loadAlertSettings();
     });
   </script>
 </body>
