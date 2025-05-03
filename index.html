@@ -1,31 +1,45 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Forex Bot UI</title>
+  <title>Forex AutoTrader PRO</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-gray-900 text-white p-4">
-  <div class="flex items-center gap-4 mb-4">
-    <select id="symbol-select" class="text-black p-2 rounded">
-      <option value="EURUSD">EUR/USD</option>
-      <option value="USDJPY">USD/JPY</option>
-    </select>
-    <button onclick="runBot()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">Run Bot Now</button>
-  </div>
+<body class="bg-gray-900 text-white p-6 font-sans">
+  <header class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">Forex AutoTrader PRO</h1>
+    <div class="flex items-center gap-2">
+      <select id="pair-select" class="bg-gray-700 text-white px-2 py-1 rounded">
+        <option value="EURUSD">EUR/USD</option>
+        <option value="USDJPY">USD/JPY</option>
+        <option value="GBPUSD">GBP/USD</option>
+      </select>
+      <button id="run-button" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">Run Bot Now</button>
+    </div>
+  </header>
+
+  <!-- Chart Section -->
+  <section class="mb-8 bg-gray-800 p-6 rounded-lg">
+    <h2 class="text-xl font-semibold mb-4">Live Chart</h2>
+    <iframe src="https://s.tradingview.com/widgetembed/?symbol=OANDA:EURUSD&interval=30" class="w-full h-96 rounded"></iframe>
+  </section>
+
+  <!-- Additional UI panels skipped for brevity... -->
+
   <script>
-    async function runBot() {
-      const symbol = document.getElementById("symbol-select").value;
+    const backendUrl = "https://forexbot-backend.onrender.com";
+
+    document.getElementById("run-button").addEventListener("click", async () => {
+      const symbol = document.getElementById("pair-select").value;
       const alerts = JSON.parse(localStorage.getItem("alerts-settings") || "{}");
-      const payload = { symbol, alerts };
-      console.log("Running bot with:", payload);
-      await fetch("https://forexbot-backend.onrender.com/run", {
+
+      await fetch(backendUrl + "/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ symbol, alerts })
       });
-    }
+    });
   </script>
 </body>
 </html>
